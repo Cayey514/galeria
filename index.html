@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clon de Aplicación de Galería</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@samsunginternet/oneui-web@0.1.0/oui.min.css">
+    <style>
+        :root {
+            --primary-color: #00c4ff;
+            --accent-color: #ff007a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #121212, #000);
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            font-size: 16px;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #1c1c1e;
+        }
+
+        .login-form {
+            background: #252527;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-form h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            background: #333;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .login-form button {
+            background: var(--primary-color);
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .login-form button:hover {
+            background: #0099cc;
+        }
+
+        .login-form .error-message {
+            color: #ff3b30;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .app-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: #1c1c1e;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+            max-width: 1400px;
+            margin: 10px auto;
+        }
+
+        .app-container.active {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #252527;
+            padding: 15px;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            z-index: 10;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            transform: translateX(-100%);
+        }
+
+        .sidebar.visible {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .hamburger {
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--primary-color);
+            transform: scale(1.02);
+        }
+
+        .nav-item::before {
+            content: attr(data-icon);
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .load-device-btn {
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-top: 10px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .load-device-btn:hover {
+            background: #555;
+        }
+
+        .empty-trash-btn {
+            background: #ff3b30;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-top: 10px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .empty-trash-btn:hover {
+            background: #cc2e26;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 260px;
+        }
+
+        .gallery-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .gallery-header h1 {
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        .fab {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0;
+            width: 50px;
+            height: 50px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+            z-index: 9;
+        }
+
+        .fab::after {
+            content: '📷';
+            font-size: 1.2rem;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+        }
+
+        .gallery-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .gallery-item {
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .gallery-item img, .gallery-item video {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+
+        .gallery-item:hover img, .gallery-item:hover video {
+            transform: scale(1.05);
+        }
+
+        .gallery-item video {
+            background: #000;
+        }
+
+        .media-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        .media-modal.active {
+            display: flex;
+        }
+
+        .media-viewer {
+            position: relative;
+            max-width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .media-viewer img, .media-viewer video {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 10px;
+        }
+
+        .media-viewer video {
+            background: #000;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .nav-btn.prev {
+            left: 10px;
+        }
+
+        .nav-btn.next {
+            right: 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .modal-actions button {
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .modal-actions button:hover {
+            background: #555;
+        }
+
+        .modal-actions .delete-btn {
+            background: #ff3b30;
+        }
+
+        .modal-actions .delete-btn:hover {
+            background: #cc2e26;
+        }
+
+        .modal-actions .favorite-btn.favorited {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .modal-actions .favorite-btn.favorited:hover {
+            background: #ccac00;
+        }
+
+        .modal-actions .restore-btn {
+            background: #28a745;
+        }
+
+        .modal-actions .restore-btn:hover {
+            background: #218838;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .camera-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        .camera-modal.active {
+            display: flex;
+        }
+
+        .camera-view {
+            position: relative;
+            max-width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .camera-view video {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 10px;
+            background: #000;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .camera-controls button {
+            background: var(--primary-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .camera-controls button:hover {
+            background: #0099cc;
+        }
+
+        .camera-controls .stop-btn {
+            background: #ff3b30;
+        }
+
+        .camera-controls .stop-btn:hover {
+            background: #cc2e26;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        @media (min-width: 1025px) {
+            .sidebar {
+                transform: translateX(0);
+                position: static;
+            }
+            .main-content {
+                margin-left: 260px;
+            }
+            .hamburger {
+                display: none;
+            }
+            .fab {
+                position: static;
+                border-radius: 20px;
+                width: auto;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            .fab::after {
+                content: 'Añadir Multimedia';
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            .gallery-item img, .gallery-item video {
+                height: 120px;
+            }
+            .gallery-header {
+                padding: 8px 10px;
+            }
+            .gallery-header h1 {
+                font-size: 1.1rem;
+            }
+            .fab {
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 14px;
+            }
+            .app-container {
+                margin: 5px;
+                border-radius: 10px;
+            }
+            .sidebar {
+                width: 85%;
+            }
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            .gallery-item img, .gallery-item video {
+                height: 100px;
+            }
+            .media-viewer img, .media-viewer video {
+                max-height: 70vh;
+            }
+            .camera-controls button {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+            .modal-actions button {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            .login-form {
+                padding: 15px;
+                max-width: 300px;
+            }
+            .login-form h2 {
+                font-size: 1.3rem;
+            }
+            .login-form input {
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+            .login-form button {
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-form">
+            <h2>Iniciar Sesión</h2>
+            <input type="text" id="username" placeholder="Usuario" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button id="loginBtn">Iniciar Sesión</button>
+            <div class="error-message" id="errorMessage">Usuario o contraseña incorrectos</div>
+        </div>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader"></div>
+    </div>
+    <div class="app-container" id="appContainer">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Galería</h2>
+                <span class="hamburger" id="hamburger">✕</span>
+            </div>
+            <div class="nav-item active" data-folder="all" data-icon="🖼️">Todos los Multimedia</div>
+            <div class="nav-item" data-folder="favorites" data-icon="⭐">Favoritos</div>
+            <div class="nav-item" data-folder="camera" data-icon="📷">Cámara</div>
+            <div class="nav-item" data-folder="trash" data-icon="🗑️">Papelera</div>
+            <button class="load-device-btn" id="loadDeviceBtn">Cargar Multimedia del Dispositivo</button>
+            <button class="empty-trash-btn" id="emptyTrashBtn" style="display: none;">Vaciar Papelera</button>
+        </div>
+        <div class="main-content" id="mainContent">
+            <div class="gallery-header">
+                <span class="hamburger" id="mobileHamburger">☰</span>
+                <h1>Todos los Multimedia</h1>
+                <button class="fab" id="addMediaBtn"></button>
+            </div>
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- Las imágenes y videos se insertarán aquí -->
+            </div>
+        </div>
+    </div>
+    <div class="media-modal" id="mediaModal">
+        <div class="media-viewer">
+            <img id="modalImage" src="" alt="Multimedia en tamaño completo" style="display: none;">
+            <video id="modalVideo" controls style="display: none;"></video>
+            <button class="nav-btn prev" id="prevBtn">❮</button>
+            <button class="nav-btn next" id="nextBtn">❯</button>
+            <button class="close-btn" id="closeModalBtn">✕</button>
+            <div class="modal-actions">
+                <button class="delete-btn" id="deleteBtn">Eliminar</button>
+                <button class="restore-btn" id="restoreBtn" style="display: none;">Restaurar</button>
+                <button class="favorite-btn" id="favoriteBtn">☆ Añadir a Favoritos</button>
+            </div>
+        </div>
+    </div>
+    <div class="camera-modal" id="cameraModal">
+        <div class="camera-view">
+            <video id="cameraFeed" autoplay></video>
+            <div class="camera-controls">
+                <button class="capture-btn" id="capturePhotoBtn">Capturar Foto</button>
+                <button class="capture-btn" id="recordVideoBtn">Grabar Video</button>
+                <button class="stop-btn" id="stopRecordBtn" style="display: none;">Detener Grabación</button>
+            </div>
+            <input type="file" id="fileInput" accept="image/*,video/*" capture multiple>
+            <input type="file" id="galleryInput" accept="image/*,video/*" multiple>
+        </div>
+    </div>
+
+    <script>
+        // Usuarios predefinidos
+        const users = [
+            { username: 'admin', password: 'admin123' },
+            { username: 'usuario1', password: 'pass123' },
+            { username: 'invitado', password: 'invitado456' }
+        ];
+
+        let mockImages = JSON.parse(localStorage.getItem('galleryMedia')) || [];
+        let trashItems = JSON.parse(localStorage.getItem('trashMedia')) || [];
+
+        const loginContainer = document.getElementById('loginContainer');
+        const loginBtn = document.getElementById('loginBtn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const appContainer = document.getElementById('appContainer');
+        const sidebar = document.getElementById('sidebar');
+        const hamburger = document.getElementById('hamburger');
+        const mobileHamburger = document.getElementById('mobileHamburger');
+        const addMediaBtn = document.getElementById('addMediaBtn');
+        const loadDeviceBtn = document.getElementById('loadDeviceBtn');
+        const emptyTrashBtn = document.getElementById('emptyTrashBtn');
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraFeed = document.getElementById('cameraFeed');
+        const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+        const recordVideoBtn = document.getElementById('recordVideoBtn');
+        const stopRecordBtn = document.getElementById('stopRecordBtn');
+        const fileInput = document.getElementById('fileInput');
+        const galleryInput = document.getElementById('galleryInput');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const mediaModal = document.getElementById('mediaModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalVideo = document.getElementById('modalVideo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const restoreBtn = document.getElementById('restoreBtn');
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        const navItems = document.querySelectorAll('.nav-item');
+        const mainContent = document.getElementById('mainContent');
+
+        let currentFolder = 'all';
+        let currentMediaIndex = 0;
+        let videoStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        function handleLogin() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            console.log('Intentando iniciar sesión con:', { username, password });
+
+            if (!username || !password) {
+                errorMessage.textContent = 'Por favor, completa ambos campos';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                console.log('Credenciales válidas, iniciando sesión...');
+                errorMessage.style.display = 'none';
+                loginContainer.style.display = 'none';
+                loadingOverlay.classList.add('active');
+                setTimeout(() => {
+                    console.log('Animación de carga completa, mostrando galería...');
+                    loadingOverlay.classList.remove('active');
+                    appContainer.style.display = 'flex';
+                    appContainer.classList.add('active');
+                    if (window.innerWidth > 1024) {
+                        sidebar.classList.add('visible');
+                        mainContent.classList.add('sidebar-open');
+                    }
+                    if (mockImages.length === 0 && trashItems.length === 0 && confirm('¿Cargar multimedia desde tu dispositivo para llenar la galería?')) {
+                        galleryInput.click();
+                    } else {
+                        renderGallery();
+                    }
+                }, 2000);
+            } else {
+                console.log('Credenciales inválidas');
+                errorMessage.textContent = 'Usuario o contraseña incorrectos';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('galleryMedia', JSON.stringify(mockImages));
+            localStorage.setItem('trashMedia', JSON.stringify(trashItems));
+            updateEmptyTrashButton();
+        }
+
+        function updateEmptyTrashButton() {
+            emptyTrashBtn.style.display = trashItems.length > 0 && currentFolder === 'trash' ? 'block' : 'none';
+        }
+
+        function renderGallery() {
+            console.log('Renderizando galería para carpeta:', currentFolder);
+            galleryGrid.innerHTML = '';
+            const filteredMedia = currentFolder === 'trash' 
+                ? trashItems 
+                : mockImages.filter(item => 
+                    currentFolder === 'all' || 
+                    (currentFolder === 'favorites' && item.favorite) || 
+                    (currentFolder === 'camera' && item.fromCamera)
+                );
+            filteredMedia.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'gallery-item';
+                if (item.type === 'image') {
+                    div.innerHTML = `<img src="${item.src}" alt="Imagen de galería">`;
+                } else {
+                    div.innerHTML = `<video src="${item.src}" muted></video>`;
+                }
+                div.addEventListener('click', () => showMedia(index, filteredMedia));
+                galleryGrid.appendChild(div);
+            });
+            updateEmptyTrashButton();
+        }
+
+        function showMedia(index, media) {
+            currentMediaIndex = index;
+            const item = media[index];
+            modalImage.style.display = item.type === 'image' ? 'block' : 'none';
+            modalVideo.style.display = item.type === 'video' ? 'block' : 'none';
+            if (item.type === 'image') {
+                modalImage.src = item.src;
+            } else {
+                modalVideo.src = item.src;
+            }
+            favoriteBtn.style.display = currentFolder === 'trash' ? 'none' : 'block';
+            favoriteBtn.textContent = item.favorite ? '⭐ En Favoritos' : '☆ Añadir a Favoritos';
+            favoriteBtn.classList.toggle('favorited', item.favorite);
+            deleteBtn.style.display = currentFolder === 'trash' ? 'block' : 'block';
+            restoreBtn.style.display = currentFolder === 'trash' ? 'block' : 'none';
+            mediaModal.classList.add('active');
+            prevBtn.style.display = index === 0 ? 'none' : 'block';
+            nextBtn.style.display = index === media.length - 1 ? 'none' : 'block';
+        }
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('visible');
+            mainContent.classList.toggle('sidebar-open');
+        }
+
+        async function startCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' },
+                    audio: true
+                });
+                cameraFeed.srcObject = videoStream;
+                cameraModal.classList.add('active');
+                sidebar.classList.remove('visible');
+                mainContent.classList.remove('sidebar-open');
+            } catch (err) {
+                console.error('Acceso a cámara denegado o error:', err);
+                alert('No se pudo acceder a la cámara. Por favor, permite los permisos de cámara y micrófono.');
+            }
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            cameraModal.classList.remove('active');
+            capturePhotoBtn.style.display = 'block';
+            recordVideoBtn.style.display = 'block';
+            stopRecordBtn.style.display = 'none';
+        }
+
+        function capturePhoto() {
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraFeed.videoWidth;
+            canvas.height = cameraFeed.videoHeight;
+            canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
+            const imageSrc = canvas.toDataURL('image/jpeg');
+            mockImages.push({
+                id: mockImages.length + 1,
+                src: imageSrc,
+                type: 'image',
+                folder: 'all',
+                favorite: false,
+                fromCamera: true
+            });
+            saveToLocalStorage();
+            stopCamera();
+            if (currentFolder === 'all' || currentFolder === 'camera') renderGallery();
+        }
+
+        function startRecording() {
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(videoStream, { mimeType: 'video/webm' });
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoSrc = URL.createObjectURL(blob);
+                mockImages.push({
+                    id: mockImages.length + 1,
+                    src: videoSrc,
+                    type: 'video',
+                    folder: 'all',
+                    favorite: false,
+                    fromCamera: true
+                });
+                saveToLocalStorage();
+                stopCamera();
+                if (currentFolder === 'all' || currentFolder === 'camera') renderGallery();
+            };
+            mediaRecorder.start();
+            capturePhotoBtn.style.display = 'none';
+            recordVideoBtn.style.display = 'none';
+            stopRecordBtn.style.display = 'block';
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+        }
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const type = file.type.startsWith('image/') ? 'image' : 'video';
+                    mockImages.push({
+                        id: mockImages.length + 1,
+                        src: e.target.result,
+                        type,
+                        folder: 'all',
+                        favorite: false,
+                        fromCamera: event.target === fileInput
+                    });
+                    saveToLocalStorage();
+                    if (currentFolder === 'all' || (currentFolder === 'camera' && event.target === fileInput)) {
+                        renderGallery();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+            stopCamera();
+        }
+
+        function moveToTrash() {
+            const filteredMedia = currentFolder === 'trash' 
+                ? trashItems 
+                : mockImages.filter(item => 
+                    currentFolder === 'all' || 
+                    (currentFolder === 'favorites' && item.favorite) || 
+                    (currentFolder === 'camera' && item.fromCamera)
+                );
+            const item = filteredMedia[currentMediaIndex];
+            const globalIndex = mockImages.findIndex(i => i.id === item.id);
+            if (globalIndex !== -1) {
+                const [deletedItem] = mockImages.splice(globalIndex, 1);
+                trashItems.push(deletedItem);
+                saveToLocalStorage();
+            }
+            mediaModal.classList.remove('active');
+            modalImage.style.display = 'none';
+            modalVideo.style.display = 'none';
+            renderGallery();
+        }
+
+        function restoreFromTrash() {
+            const item = trashItems[currentMediaIndex];
+            const globalIndex = trashItems.findIndex(i => i.id === item.id);
+            if (globalIndex !== -1) {
+                const [restoredItem] = trashItems.splice(globalIndex, 1);
+                mockImages.push(restoredItem);
+                saveToLocalStorage();
+            }
+            mediaModal.classList.remove('active');
+            modalImage.style.display = 'none';
+            modalVideo.style.display = 'none';
+            renderGallery();
+        }
+
+        function emptyTrash() {
+            if (confirm('¿Vaciar la papelera? Esta acción no se puede deshacer.')) {
+                trashItems = [];
+                saveToLocalStorage();
+                renderGallery();
+            }
+        }
+
+        function toggleFavorite() {
+            const filteredMedia = mockImages.filter(item => 
+                currentFolder === 'all' || 
+                (currentFolder === 'favorites' && item.favorite) || 
+                (currentFolder === 'camera' && item.fromCamera)
+            );
+            const item = filteredMedia[currentMediaIndex];
+            const globalIndex = mockImages.findIndex(i => i.id === item.id);
+            if (globalIndex !== -1) {
+                mockImages[globalIndex].favorite = !mockImages[globalIndex].favorite;
+                favoriteBtn.textContent = mockImages[globalIndex].favorite ? '⭐ En Favoritos' : '☆ Añadir a Favoritos';
+                favoriteBtn.classList.toggle('favorited', mockImages[globalIndex].favorite);
+                saveToLocalStorage();
+                if (currentFolder === 'favorites') renderGallery();
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            console.log('Botón de inicio de sesión clickeado');
+            handleLogin();
+        });
+
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Tecla Enter presionada en campo de usuario');
+                handleLogin();
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Tecla Enter presionada en campo de contraseña');
+                handleLogin();
+            }
+        });
+
+        hamburger.addEventListener('click', toggleSidebar);
+        mobileHamburger.addEventListener('click', toggleSidebar);
+
+        addMediaBtn.addEventListener('click', () => {
+            const choice = confirm('¿Capturar nuevo multimedia o elegir desde el dispositivo? Aceptar para Cámara, Cancelar para Dispositivo.');
+            if (choice) {
+                startCamera();
+            } else {
+                galleryInput.click();
+            }
+        });
+
+        loadDeviceBtn.addEventListener('click', () => {
+            galleryInput.click();
+        });
+
+        emptyTrashBtn.addEventListener('click', emptyTrash);
+
+        fileInput.addEventListener('change', handleFileUpload);
+        galleryInput.addEventListener('change', handleFileUpload);
+
+        capturePhotoBtn.addEventListener('click', capturePhoto);
+        recordVideoBtn.addEventListener('click', startRecording);
+        stopRecordBtn.addEventListener('click', stopRecording);
+
+        prevBtn.addEventListener('click', () => {
+            const filteredMedia = currentFolder === 'trash' 
+                ? trashItems 
+                : mockImages.filter(item => 
+                    currentFolder === 'all' || 
+                    (currentFolder === 'favorites' && item.favorite) || 
+                    (currentFolder === 'camera' && item.fromCamera)
+                );
+            if (currentMediaIndex > 0) {
+                showMedia(currentMediaIndex - 1, filteredMedia);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const filteredMedia = currentFolder === 'trash' 
+                ? trashItems 
+                : mockImages.filter(item => 
+                    currentFolder === 'all' || 
+                    (currentFolder === 'favorites' && item.favorite) || 
+                    (currentFolder === 'camera' && item.fromCamera)
+                );
+            if (currentMediaIndex < filteredMedia.length - 1) {
+                showMedia(currentMediaIndex + 1, filteredMedia);
+            }
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            mediaModal.classList.remove('active');
+            modalImage.style.display = 'none';
+            modalVideo.style.display = 'none';
+        });
+
+        deleteBtn.addEventListener('click', () => {
+            if (currentFolder === 'trash') {
+                if (confirm('¿Eliminar este multimedia permanentemente?')) {
+                    const item = trashItems[currentMediaIndex];
+                    const globalIndex = trashItems.findIndex(i => i.id === item.id);
+                    if (globalIndex !== -1) {
+                        trashItems.splice(globalIndex, 1);
+                        saveToLocalStorage();
+                    }
+                    mediaModal.classList.remove('active');
+                    modalImage.style.display = 'none';
+                    modalVideo.style.display = 'none';
+                    renderGallery();
+                }
+            } else {
+                if (confirm('¿Mover este multimedia a la papelera?')) {
+                    moveToTrash();
+                }
+            }
+        });
+
+        restoreBtn.addEventListener('click', () => {
+            if (confirm('¿Restaurar este multimedia?')) {
+                restoreFromTrash();
+            }
+        });
+
+        favoriteBtn.addEventListener('click', toggleFavorite);
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                currentFolder = item.dataset.folder;
+                document.querySelector('.gallery-header h1').textContent = item.textContent;
+                renderGallery();
+                sidebar.classList.remove('visible');
+                mainContent.classList.remove('sidebar-open');
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024 && appContainer.classList.contains('active')) {
+                sidebar.classList.add('visible');
+                mainContent.classList.add('sidebar-open');
+            } else {
+                sidebar.classList.remove('visible');
+                mainContent.classList.remove('sidebar-open');
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
