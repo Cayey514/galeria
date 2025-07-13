@@ -717,11 +717,7 @@
                         sidebar.classList.add('visible');
                         mainContent.classList.add('sidebar-open');
                     }
-                    if (mockImages.length === 0 && trashItems.length === 0 && confirm('¿Cargar multimedia desde tu dispositivo para llenar la galería?')) {
-                        galleryInput.click();
-                    } else {
-                        renderGallery();
-                    }
+                   
                 }, 2000);
             } else {
                 console.log('Credenciales inválidas');
