@@ -596,11 +596,11 @@
                 <h2>Galería</h2>
                 <span class="hamburger" id="hamburger">✕</span>
             </div>
-            <div class="nav-item active" data-folder="all" data-icon="🖼️">Todos los Multimedia</div>
+            <div class="nav-item active" data-folder="all" data-icon="🖼️">Galería</div>
             <div class="nav-item" data-folder="favorites" data-icon="⭐">Favoritos</div>
             <div class="nav-item" data-folder="camera" data-icon="📷">Cámara</div>
             <div class="nav-item" data-folder="trash" data-icon="🗑️">Papelera</div>
-            <button class="load-device-btn" id="loadDeviceBtn">Cargar Multimedia del Dispositivo</button>
+            <button class="load-device-btn" id="loadDeviceBtn">Cargar Multimedia</button>
             <button class="empty-trash-btn" id="emptyTrashBtn" style="display: none;">Vaciar Papelera</button>
         </div>
         <div class="main-content" id="mainContent">
@@ -644,10 +644,9 @@
     <script>
         // Usuarios predefinidos
         const users = [
-            { username: 'admin', password: 'admin123' },
+            { username: 'ximena', password: 'ximena' },
             { username: 'usuario1', password: 'pass123' },
             { username: 'invitado', password: 'invitado456' }
-            { username: 'ximena', password: 'ximena' }
         ];
 
         let mockImages = JSON.parse(localStorage.getItem('galleryMedia')) || [];
@@ -976,7 +975,7 @@
         mobileHamburger.addEventListener('click', toggleSidebar);
 
         addMediaBtn.addEventListener('click', () => {
-            const choice = confirm('¿Capturar nuevo multimedia o elegir desde el dispositivo? Aceptar para Cámara, Cancelar para Dispositivo.');
+            const choice = confirm('Capturar nuevo multimedia');
             if (choice) {
                 startCamera();
             } else {
@@ -1044,14 +1043,14 @@
                     renderGallery();
                 }
             } else {
-                if (confirm('¿Mover este multimedia a la papelera?')) {
+                if (confirm('¿Mover a la papelera?')) {
                     moveToTrash();
                 }
             }
         });
 
         restoreBtn.addEventListener('click', () => {
-            if (confirm('¿Restaurar este multimedia?')) {
+            if (confirm('¿Restaurar?')) {
                 restoreFromTrash();
             }
         });
